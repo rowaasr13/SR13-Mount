@@ -140,7 +140,7 @@ local function Mount(args)
          local _, icon = GetProfessionInfo(prof1)
          if icon == 136246 then have_herbalism = true end
       end
-      if prof2 and not have_herbalism then
+      if not have_herbalism and prof2 then
          local _, icon = GetProfessionInfo(prof2)
          if icon == 136246 then have_herbalism = true end
       end
@@ -195,7 +195,7 @@ local function Mount(args)
          prio[#prio + 1] = "shop"
       end
 
-      if have_herbalism and not (is_swimming and no_fly_zone) then
+      if have_herbalism  then
          prio[#prio + 1] = "herbalism"
       end
 
