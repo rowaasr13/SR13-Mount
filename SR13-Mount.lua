@@ -164,8 +164,6 @@ local function Mount(args)
       local no_fly_zone =
          level < 50
          or instanceType == 'pvp'
-         or (instanceMapID == 870 and level < 50)                -- 870 == Pandaria World Map,
-         or (instanceMapID == 1116 and not IsSpellKnown(191645)) -- 1116 == Draenor World Map,
          or instanceMapID == 1064                   		        -- 1064 == Isle of Thunder
          or (instanceMapID == 1220 and not IsSpellKnown(233368)) -- 1220 == Broken Isles
          or (instanceMapID == 1448 and not IsSpellKnown(233368)) -- 1448 == Dalaran?
