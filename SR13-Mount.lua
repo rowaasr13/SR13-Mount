@@ -61,6 +61,8 @@ local prio = {}
 local name = {}
 local spellIDs = {}
 local mount_types = {}
+local player_can_fly
+
 local function Mount(args)
    if not IsMounted() then
       for _, category in pairs(available) do
@@ -155,6 +157,10 @@ local function Mount(args)
       ) end
 
       local level = UnitLevel("player")
+      if not player_can_fly then
+         player_can_fly = IsSpellKnown(90265) or IsSpellKnown(34090) -- Master or Expert Riding, allows flying mounts to actually fly
+      end
+
       local no_fly_zone =
          level < 50
          or instanceType == 'pvp'
