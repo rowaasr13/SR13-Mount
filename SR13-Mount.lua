@@ -181,6 +181,13 @@ local function Mount(args)
          end
       end
 
+      if instanceMapID == 2222 then
+         local uiMapID = C_Map_GetBestMapForUnit("player")
+         if uiMapID == 1543 then -- The Shadowlands > The Maw
+            return
+         end
+      end
+
       if instanceType == "pvp" then
          prio[#prio + 1] = "pvp"
          prio[#prio + 1] = "ground"
