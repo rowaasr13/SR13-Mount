@@ -163,11 +163,11 @@ local function Mount(args)
       local no_fly_zone =
          (not player_can_fly)
          or instanceType == 'pvp'
-         or instanceMapID == 1064                                -- 1064 == Isle of Thunder
-         or (instanceMapID == 1220 and not IsSpellKnown(233368)) -- 1220 == Broken Isles
-         or (instanceMapID == 1448 and not IsSpellKnown(233368)) -- 1448 == Dalaran?
-         or (instanceMapID == 1642)                              -- 1642 == Zandalar
-         or (instanceMapID == 1643)                              -- 1643 == Kul Tiras
+         or instanceMapID == 1064                                -- Isle of Thunder
+         or (instanceMapID == 1642)                              -- Zandalar
+         or (instanceMapID == 1643)                              -- Kul Tiras
+         or (instanceMapID == 1718)                              -- Nazjatar
+         or (instanceMapID == 2222)                              -- The Shadowlands
 
       local is_submerged = IsSubmerged()
 
