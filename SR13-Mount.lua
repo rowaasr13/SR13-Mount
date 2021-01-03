@@ -181,6 +181,10 @@ local function Mount(args)
          end
       end
 
+      if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
+         return
+      end
+
       if instanceMapID == 2222 then
          local uiMapID = C_Map_GetBestMapForUnit("player")
          if uiMapID == 1543 then -- The Shadowlands > The Maw
