@@ -164,9 +164,11 @@ local function Mount(args)
          (not player_can_fly)
          or instanceType == 'pvp'
          or instanceMapID == 1064                                -- Isle of Thunder
-         or (instanceMapID == 1642)                              -- Zandalar
-         or (instanceMapID == 1643)                              -- Kul Tiras
-         or (instanceMapID == 1718)                              -- Nazjatar
+         or ((
+               instanceMapID == 1642                             -- Zandalar
+            or instanceMapID == 1643                             -- Kul Tiras
+            or instanceMapID == 1718                             -- Nazjatar
+         ) and not IsSpellKnown(278833))                         -- Battle for Azeroth Pathfinder Rank 2
          or (instanceMapID == 2222)                              -- The Shadowlands
 
       local is_submerged = IsSubmerged()
