@@ -54,6 +54,7 @@ local available = {
    watergliding    = {},
    vashjir         = {},
    slow            = {},
+   shadowlands_the_maw = {},
 }
 
 local prio = {}
@@ -94,7 +95,6 @@ local function Mount(args)
                break
             end
 
-
             local prefix = "ground"
             if low_prio_mount[spellID] then
                local tbl = available[prefix .. "_low_prio"] tbl[#tbl + 1] = mountID
@@ -129,6 +129,10 @@ local function Mount(args)
 
             if spellID == 87090 or spellID == 87091 then
                local tbl = available.pvp tbl[#tbl + 1] = mountID
+            end
+
+            if spellID == 344578 then
+               local tbl = available.shadowlands_the_maw tbl[#tbl + 1] = mountID
             end
 
          until true
@@ -183,17 +187,6 @@ local function Mount(args)
          end
       end
 
-      if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
-         return
-      end
-
-      if instanceMapID == 2222 then
-         local uiMapID = C_Map_GetBestMapForUnit("player")
-         if uiMapID == 1543 then -- The Shadowlands > The Maw
-            return
-         end
-      end
-
       if instanceType == "pvp" then
          prio[#prio + 1] = "pvp"
          prio[#prio + 1] = "ground"
@@ -224,6 +217,19 @@ local function Mount(args)
       prio[#prio + 1] = "ground"
       prio[#prio + 1] = "ground_low_prio"
       prio[#prio + 1] = "slow"
+
+      if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
+         wipe(prio)
+         prio[1] = "shadowlands_the_maw"
+      end
+
+      if instanceMapID == 2222 then
+         local uiMapID = C_Map_GetBestMapForUnit("player")
+         if uiMapID == 1543 then -- The Shadowlands > The Maw
+            wipe(prio)
+            prio[1] = "shadowlands_the_maw"
+         end
+      end
 
       local mount_category, mount_count, pick_idx, mountID
       for idx = 1, #prio do
