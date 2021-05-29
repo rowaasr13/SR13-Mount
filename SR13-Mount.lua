@@ -161,7 +161,8 @@ local function Mount(args)
       ) end
 
       if not player_can_fly then
-         player_can_fly = IsSpellKnown(90265) or IsSpellKnown(34090) -- Master or Expert Riding, allows flying mounts to actually fly
+         -- Master/Expert/Artisan Riding, allows flying mounts to actually fly
+         player_can_fly = IsSpellKnown(90265) or IsSpellKnown(34090) or IsSpellKnown(34091)
       end
 
       local no_fly_zone =
