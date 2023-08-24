@@ -65,6 +65,14 @@ local name = {}
 local spellIDs = {}
 local mount_types = {}
 local player_can_fly
+local player_true_maw_walker
+
+local function IsPlayerTrueMawWalker()
+   if player_true_maw_walker then return true end
+
+   player_true_maw_walker = C_QuestLog.IsQuestFlaggedCompleted(63994) -- Who is the Maw Walker? (https://www.wowhead.com/quest=63994)
+   return player_true_maw_walker
+end
 
 local function Mount(args)
    if not IsMounted() then
@@ -88,6 +96,7 @@ local function Mount(args)
             local mount_type = mount_types[spellID]
             if not mount_type then
                local creatureDisplayID, descriptionText, sourceText, isSelfMount, mountType = GetMountInfoExtraByID(mountID)
+
                mount_type = mountType
                mount_types[spellID] = mount_type
             end
@@ -228,15 +237,22 @@ local function Mount(args)
       prio[#prio + 1] = "slow"
 
       if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
-         wipe(prio)
-         prio[1] = "shadowlands_the_maw"
+         if not IsPlayerTrueMawWalker() then
+            wipe(prio)
+            prio[1] = "shadowlands_the_maw"
+         end
       end
 
       if instanceMapID == 2222 then
          local uiMapID = C_Map_GetBestMapForUnit("player")
-         if uiMapID == 1543 then -- The Shadowlands > The Maw
-            wipe(prio)
-            prio[1] = "shadowlands_the_maw"
+         if
+            uiMapID == 1543 -- The Shadowlands > The Maw
+            or uiMapID == 1961 -- The Shadowlands > Korthia
+         then
+            if not IsPlayerTrueMawWalker() then
+               wipe(prio)
+               prio[1] = "shadowlands_the_maw"
+            end
          end
       end
 
