@@ -6,6 +6,7 @@ local GetInstanceInfo = GetInstanceInfo
 local GetMountIDs = C_MountJournal.GetMountIDs
 local GetMountInfoByID = C_MountJournal.GetMountInfoByID
 local GetMountInfoExtraByID = C_MountJournal.GetMountInfoExtraByID
+local IsAdvancedFlyableArea = IsAdvancedFlyableArea
 local IsInInstance = IsInInstance
 local IsMounted = IsMounted
 local IsSpellKnown = IsSpellKnown
@@ -55,6 +56,7 @@ local available = {
    vashjir         = {},
    slow            = {},
    shadowlands_the_maw = {},
+   dragonriding    = {},
 }
 
 local prio = {}
@@ -75,7 +77,7 @@ local function Mount(args)
       for idx = 1, #mount_ids do
          repeat
             local mountID = mount_ids[idx]
-            local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, isFactionSpecific, faction, isFiltered, isCollected, mountID = GetMountInfoByID(mountID)
+            local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, isFactionSpecific, faction, isFiltered, isCollected, mountID, isForDragonriding = GetMountInfoByID(mountID)
 
             if not isUsable then break end
 
@@ -92,6 +94,9 @@ local function Mount(args)
 
             if spellID == 179244 or spellID == 179245 then
                local tbl = available.slow tbl[#tbl + 1] = mountID
+            if isForDragonriding then
+               local prefix = "dragonriding"
+               local tbl = available[prefix] tbl[#tbl + 1] = mountID
                break
             end
 
@@ -151,14 +156,18 @@ local function Mount(args)
 
       local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
 
-      if args.print then args.print(
-         "mounts available " ..
-         " G:" .. #available.ground ..
-         " F:" .. #available.flying ..
-         " S:" .. #available.shop ..
-         " W:" .. #available.watergliding ..
-         " H:" .. #available.herbalism
-      ) end
+      if args.print then
+         args.print(
+            "mounts available " ..
+            " G:" .. #available.ground ..
+            " F:" .. #available.flying ..
+            " S:" .. #available.shop ..
+            " W:" .. #available.watergliding ..
+            " H:" .. #available.herbalism ..
+            " D:" .. #available.dragonriding ..
+            " instance (" .. instanceMapID ..") " .. instanceName
+         )
+      end
 
       if not player_can_fly then
          -- Master/Expert/Artisan Riding, allows flying mounts to actually fly
@@ -181,6 +190,10 @@ local function Mount(args)
                prio[#prio + 1] = "vashjir"
             end
          end
+      end
+
+      if IsAdvancedFlyableArea() then
+         prio[#prio + 1] = "dragonriding"
       end
 
       if instanceType == "pvp" then
