@@ -102,7 +102,13 @@ local function Mount(args)
             end
 
             if spellID == 179244 or spellID == 179245 then
-               local tbl = available.slow tbl[#tbl + 1] = mountID
+               local prefix = "slow"
+               local tbl = available[prefix] tbl[#tbl + 1] = mountID
+               break
+            end
+
+            if spellID == 367826 then break end -- Siege Turtle, only increases swim speed
+
             if isForDragonriding then
                local prefix = "dragonriding"
                local tbl = available[prefix] tbl[#tbl + 1] = mountID
