@@ -147,11 +147,11 @@ local function Mount(args)
       local prof1, prof2 = GetProfessions()
       if prof1 then
          local _, icon = GetProfessionInfo(prof1)
-         if icon == 136246 then have_herbalism = true end
+         if icon == 4620675 then have_herbalism = true end
       end
       if not have_herbalism and prof2 then
          local _, icon = GetProfessionInfo(prof2)
-         if icon == 136246 then have_herbalism = true end
+         if icon == 4620675 then have_herbalism = true end
       end
 
       local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
