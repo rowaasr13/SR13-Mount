@@ -190,6 +190,7 @@ local function Mount(args)
       local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
 
       if args.print then
+         local uiMapID = C_Map_GetBestMapForUnit("player")
          args.print(
             "mounts available " ..
             " G:" .. #available.ground ..
@@ -198,7 +199,7 @@ local function Mount(args)
             " W:" .. #available.watergliding ..
             " H:" .. #available.herbalism ..
             " D:" .. #available.dragonriding ..
-            " instance (" .. instanceMapID ..") " .. instanceName
+            " instance (" .. instanceMapID .. ">" .. (uiMapID or "nil") .. ") " .. instanceName
          )
       end
 
