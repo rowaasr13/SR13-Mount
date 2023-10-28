@@ -66,6 +66,7 @@ local spellIDs = {}
 local mount_types = {}
 local player_can_fly
 local player_true_maw_walker
+local player_can_fly_in_shadowlands
 local herbalism_local_name
 
 local function IsPlayerTrueMawWalker()
@@ -74,6 +75,15 @@ local function IsPlayerTrueMawWalker()
    player_true_maw_walker = C_QuestLog.IsQuestFlaggedCompleted(63994) -- Who is the Maw Walker? (https://www.wowhead.com/quest=63994)
    return player_true_maw_walker
 end
+
+local function PlayerCanFlyInShadowlands()
+   if player_can_fly_in_shadowlands then return true end
+
+   player_can_fly_in_shadowlands = C_QuestLog.IsQuestFlaggedCompleted(63893) -- "Shadowlands Flying" spell (https://www.wowhead.com/spell=352177) marks this quest as complete
+   return player_can_fly_in_shadowlands
+end
+
+local shadowlands_flying_uimapid = { [1525] --[[Revendreth]] = true, [1533] --[[Bastion]] = true, [1536] --[[Maldraxxus]] = true, [1565] --[[Ardenwald]] = true }
 
 local function Mount(args)
    if not IsMounted() then
@@ -200,8 +210,9 @@ local function Mount(args)
       local no_fly_zone =
          (not player_can_fly)
          or instanceType == 'pvp'
-         or instanceMapID == 1064                                -- Isle of Thunder
-         or (instanceMapID == 2222)                              -- The Shadowlands
+         or instanceMapID == 1064                  -- Isle of Thunder
+         or (instanceMapID == 2222                 -- The Shadowlands
+            and not (PlayerCanFlyInShadowlands() and shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]))
 
       local is_submerged = IsSubmerged()
 
