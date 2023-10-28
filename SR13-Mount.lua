@@ -66,6 +66,7 @@ local spellIDs = {}
 local mount_types = {}
 local player_can_fly
 local player_true_maw_walker
+local herbalism_local_name
 
 local function IsPlayerTrueMawWalker()
    if player_true_maw_walker then return true end
@@ -158,15 +159,22 @@ local function Mount(args)
          until true
       end
 
+      if (herbalism_local_name == nil or herbalism_local_name == '') then
+         local herbalism_skill_line_id = C_TradeSkillUI.GetProfessionSkillLineID(Enum.Profession.Herbalism)
+         if herbalism_skill_line_id then herbalism_local_name = C_TradeSkillUI.GetTradeSkillDisplayName(herbalism_skill_line_id) end
+         if herbalism_local_name == '' then herbalism_local_name = nil end
+      end
       local have_herbalism
       local prof1, prof2 = GetProfessions()
       if prof1 then
-         local _, icon = GetProfessionInfo(prof1)
+         local name, icon = GetProfessionInfo(prof1)
          if icon == 4620675 then have_herbalism = true end
+         if name and herbalism_local_name and name == herbalism_local_name then have_herbalism = true end
       end
       if not have_herbalism and prof2 then
-         local _, icon = GetProfessionInfo(prof2)
+         local name, icon = GetProfessionInfo(prof2)
          if icon == 4620675 then have_herbalism = true end
+         if name and herbalism_local_name and name == herbalism_local_name then have_herbalism = true end
       end
 
       local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
