@@ -85,6 +85,27 @@ end
 
 local shadowlands_flying_uimapid = { [1525] --[[Revendreth]] = true, [1533] --[[Bastion]] = true, [1536] --[[Maldraxxus]] = true, [1565] --[[Ardenwald]] = true }
 
+local function ClassicFlyingEnabled(instanceType, instanceMapID)
+   if instanceType == 'pvp' then return end
+   if instanceMapID == 1064 then return end  -- Isle of Thunder
+
+   if not player_can_fly then
+      -- Master/Expert/Artisan Riding, allows flying mounts to actually fly
+      player_can_fly = IsSpellKnown(90265) or IsSpellKnown(34090) or IsSpellKnown(34091)
+   end
+   if not player_can_fly then return end
+
+   if instanceMapID == 2222 then -- The Shadowlands
+      return PlayerCanFlyInShadowlands() and shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]
+   end
+
+   if instanceMapID == 2444 then -- Dragon Isles
+      return
+   end
+
+   return true
+end
+
 local function Mount(args)
    local alt_mode
    local is_alt_mode_on = args.is_alt_mode_on
@@ -207,17 +228,7 @@ local function Mount(args)
          )
       end
 
-      if not player_can_fly then
-         -- Master/Expert/Artisan Riding, allows flying mounts to actually fly
-         player_can_fly = IsSpellKnown(90265) or IsSpellKnown(34090) or IsSpellKnown(34091)
-      end
-
-      local no_fly_zone =
-         (not player_can_fly)
-         or instanceType == 'pvp'
-         or instanceMapID == 1064                  -- Isle of Thunder
-         or (instanceMapID == 2222                 -- The Shadowlands
-            and not (PlayerCanFlyInShadowlands() and shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]))
+      local classic_flying_enabled = ClassicFlyingEnabled(instanceType, instanceMapID)
 
       local is_submerged = IsSubmerged()
 
@@ -253,7 +264,7 @@ local function Mount(args)
          prio[#prio + 1] = "herbalism"
       end
 
-      if not no_fly_zone then
+      if classic_flying_enabled then
          prio[#prio + 1] = "flying"
          prio[#prio + 1] = "flying_low_prio"
       end
