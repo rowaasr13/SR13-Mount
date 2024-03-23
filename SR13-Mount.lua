@@ -57,6 +57,7 @@ local available = {
    slow            = {},
    shadowlands_the_maw = {},
    dragonriding    = {},
+   underwater      = {},
 }
 
 local prio = {}
@@ -139,6 +140,12 @@ local function Mount(args)
 
             if spellID == 179244 or spellID == 179245 then
                local prefix = "slow"
+               local tbl = available[prefix] tbl[#tbl + 1] = mountID
+               break
+            end
+
+            if spellID == 228919 then -- Darkwater Skate -- use type 254 instead?
+               local prefix = "underwater"
                local tbl = available[prefix] tbl[#tbl + 1] = mountID
                break
             end
@@ -233,6 +240,9 @@ local function Mount(args)
       local is_submerged = IsSubmerged()
 
       if is_submerged then
+         if alt_mode then
+            prio[#prio + 1] = "underwater"
+         end
          if instanceMapID == 0 then
             local uiMapID = C_Map_GetBestMapForUnit("player")
             local is_vashjir = uiMapID >= 201 and uiMapID <= 205 and uiMapID ~= 202 -- 202 is Gilneas
