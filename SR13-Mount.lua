@@ -86,6 +86,10 @@ end
 local shadowlands_flying_uimapid = { [1525] --[[Revendreth]] = true, [1533] --[[Bastion]] = true, [1536] --[[Maldraxxus]] = true, [1565] --[[Ardenwald]] = true }
 
 local function Mount(args)
+   local alt_mode
+   local is_alt_mode_on = args.is_alt_mode_on
+   if is_alt_mode_on then alt_mode = is_alt_mode_on() end
+
    if not IsMounted() then
       for _, category in pairs(available) do
          wipe(category)
@@ -227,7 +231,7 @@ local function Mount(args)
          end
       end
 
-      if IsAdvancedFlyableArea() then
+      if IsAdvancedFlyableArea() and not alt_mode then
          prio[#prio + 1] = "dragonriding"
       end
 
@@ -252,6 +256,10 @@ local function Mount(args)
       if not no_fly_zone then
          prio[#prio + 1] = "flying"
          prio[#prio + 1] = "flying_low_prio"
+      end
+
+      if IsAdvancedFlyableArea() and alt_mode then
+         prio[#prio + 1] = "dragonriding"
       end
 
       if is_swimming then
@@ -295,7 +303,7 @@ local function Mount(args)
       end
 
       if mountID then
-         if args.print then args.print(format("mount: %s %d/%d %s(%d)", mount_category, pick_idx, mount_count, name[mountID], spellIDs[mountID])) end
+         if args.print then args.print(format("mount: %s %s %d/%d %s(%d)", (alt_mode and "alt " or ""), mount_category, pick_idx, mount_count, name[mountID], spellIDs[mountID])) end
          C_MountJournal.SummonByID(mountID)
          return true
       end
