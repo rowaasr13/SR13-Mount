@@ -88,7 +88,8 @@ local shadowlands_flying_uimapid = { [1525] --[[Revendreth]] = true, [1533] --[[
 
 local function ClassicFlyingEnabled(instanceType, instanceMapID)
    if instanceType == 'pvp' then return end
-   if instanceMapID == 1064 then return end  -- Isle of Thunder
+   if instanceMapID ==  974 then return end -- Darkmoon Faire
+   if instanceMapID == 1064 then return end -- Isle of Thunder
 
    if not player_can_fly then
       -- Master/Expert/Artisan Riding, allows flying mounts to actually fly
