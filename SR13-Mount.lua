@@ -100,8 +100,9 @@ local function ClassicFlyingEnabled(instanceType, instanceMapID)
       return PlayerCanFlyInShadowlands() and shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]
    end
 
-   if instanceMapID == 2444 then -- Dragon Isles
-      return
+   if instanceMapID == 2444 or instanceMapID == 2454 then -- Dragon Isles + Zaralek Cavern
+      local _, _, _, completed = GetAchievementInfo(19307) -- Dragon Isles Pathfinder
+      return completed
    end
 
    return true
