@@ -242,15 +242,16 @@ local function Mount(args)
       local is_submerged = IsSubmerged()
 
       if is_submerged then
-         if alt_mode then
-            prio[#prio + 1] = "underwater"
-         end
          if instanceMapID == 0 then
             local uiMapID = C_Map_GetBestMapForUnit("player")
             local is_vashjir = uiMapID >= 201 and uiMapID <= 205 and uiMapID ~= 202 -- 202 is Gilneas
             if is_vashjir then
                prio[#prio + 1] = "vashjir"
+               prio[#prio + 1] = "underwater"
             end
+         end
+         if alt_mode then
+            prio[#prio + 1] = "underwater"
          end
       end
 
