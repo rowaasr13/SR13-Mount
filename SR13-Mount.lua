@@ -267,7 +267,7 @@ local function Mount(args)
          prio[#prio + 1] = "flying_low_prio"
       end
 
-      if IsInInstance() then
+      if not alt_mode and IsInInstance() then
          prio[#prio + 1] = "shop"
       end
 
