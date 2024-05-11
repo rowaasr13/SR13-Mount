@@ -41,9 +41,6 @@ local low_prio_mount = {
    [130138] = 1, -- Black Riding Goat
 }
 
-local globalFavoriteFlying = {
-}
-
 local available = {
    ground          = {},
    ground_low_prio = {},
@@ -98,7 +95,8 @@ local function ClassicFlyingEnabled(instanceType, instanceMapID)
    if not player_can_fly then return end
 
    if instanceMapID == 2222 then -- The Shadowlands
-      return PlayerCanFlyInShadowlands() and shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]
+      if not PlayerCanFlyInShadowlands() then return end
+      return shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]
    end
 
    if instanceMapID == 2444 or instanceMapID == 2454 then -- Dragon Isles + Zaralek Cavern
@@ -273,7 +271,7 @@ local function Mount(args)
          prio[#prio + 1] = "shop"
       end
 
-      if have_herbalism  then
+      if have_herbalism then
          prio[#prio + 1] = "herbalism"
       end
 
