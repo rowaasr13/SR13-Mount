@@ -107,99 +107,104 @@ local function ClassicFlyingEnabled(instanceType, instanceMapID)
    return true
 end
 
+local function ScanMounts()
+   for _, category in pairs(available) do
+      wipe(category)
+   end
+
+   local mount_ids = GetMountIDs()
+   for idx = 1, #mount_ids do
+      repeat
+         local mountID = mount_ids[idx]
+         local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, isFactionSpecific, faction, isFiltered, isCollected, mountID, isForDragonriding = GetMountInfoByID(mountID)
+
+         if not isUsable then break end
+
+         name[mountID] = creatureName
+         spellIDs[mountID] = spellID
+
+         -- no need to retrieve mount type more than once
+         local mount_type = mount_types[spellID]
+         if not mount_type then
+            local creatureDisplayID, descriptionText, sourceText, isSelfMount, mountType = GetMountInfoExtraByID(mountID)
+
+            mount_type = mountType
+            mount_types[spellID] = mount_type
+         end
+
+         if spellID == 179244 or spellID == 179245 then
+            local prefix = "slow"
+            local tbl = available[prefix] tbl[#tbl + 1] = mountID
+            break
+         end
+
+         if spellID == 228919 then -- Darkwater Skate -- use type 254 instead?
+            local prefix = "underwater"
+            local tbl = available[prefix] tbl[#tbl + 1] = mountID
+            break
+         end
+
+         if spellID == 367826 then break end -- Siege Turtle, only increases swim speed
+
+         if isForDragonriding then
+            local prefix = "dragonriding"
+            local tbl = available[prefix] tbl[#tbl + 1] = mountID
+            break
+         end
+
+         local prefix = "ground"
+         if low_prio_mount[spellID] then
+            local tbl = available[prefix .. "_low_prio"] tbl[#tbl + 1] = mountID
+         else
+            local tbl = available[prefix] tbl[#tbl + 1] = mountID
+         end
+
+         if mount_type == 248 then
+            local prefix = "flying"
+            if low_prio_mount[spellID] then
+               local tbl = available[prefix .. "_low_prio"] tbl[#tbl + 1] = mountID
+            else
+               local tbl = available[prefix] tbl[#tbl + 1] = mountID
+            end
+         end
+
+         if mount_type == 269 then
+            local tbl = available.watergliding tbl[#tbl + 1] = mountID
+         end
+
+         if spellID == 61425 or spellID == 61447 then
+            local tbl = available.shop tbl[#tbl + 1] = mountID
+         end
+
+         if spellID == 75207 then
+            local tbl = available.vashjir tbl[#tbl + 1] = mountID
+         end
+
+         if spellID == 134359 then
+            local tbl = available.herbalism tbl[#tbl + 1] = mountID
+         end
+
+         if spellID == 87090 or spellID == 87091 then
+            local tbl = available.pvp tbl[#tbl + 1] = mountID
+         end
+
+         if spellID == 344578 then
+            local tbl = available.shadowlands_the_maw tbl[#tbl + 1] = mountID
+         end
+
+      until true
+   end
+end
+
 local function Mount(args)
    local alt_mode
    local is_alt_mode_on = args.is_alt_mode_on
    if is_alt_mode_on then alt_mode = is_alt_mode_on() end
 
    if not IsMounted() then
-      for _, category in pairs(available) do
-         wipe(category)
-      end
       wipe(prio)
 
-      local mount_ids = GetMountIDs()
-      for idx = 1, #mount_ids do
-         repeat
-            local mountID = mount_ids[idx]
-            local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, isFactionSpecific, faction, isFiltered, isCollected, mountID, isForDragonriding = GetMountInfoByID(mountID)
-
-            if not isUsable then break end
-
-            name[mountID] = creatureName
-            spellIDs[mountID] = spellID
-
-            -- no need to retrieve mount type more than once
-            local mount_type = mount_types[spellID]
-            if not mount_type then
-               local creatureDisplayID, descriptionText, sourceText, isSelfMount, mountType = GetMountInfoExtraByID(mountID)
-
-               mount_type = mountType
-               mount_types[spellID] = mount_type
-            end
-
-            if spellID == 179244 or spellID == 179245 then
-               local prefix = "slow"
-               local tbl = available[prefix] tbl[#tbl + 1] = mountID
-               break
-            end
-
-            if spellID == 228919 then -- Darkwater Skate -- use type 254 instead?
-               local prefix = "underwater"
-               local tbl = available[prefix] tbl[#tbl + 1] = mountID
-               break
-            end
-
-            if spellID == 367826 then break end -- Siege Turtle, only increases swim speed
-
-            if isForDragonriding then
-               local prefix = "dragonriding"
-               local tbl = available[prefix] tbl[#tbl + 1] = mountID
-               break
-            end
-
-            local prefix = "ground"
-            if low_prio_mount[spellID] then
-               local tbl = available[prefix .. "_low_prio"] tbl[#tbl + 1] = mountID
-            else
-               local tbl = available[prefix] tbl[#tbl + 1] = mountID
-            end
-
-            if mount_type == 248 then
-               local prefix = "flying"
-               if low_prio_mount[spellID] then
-                  local tbl = available[prefix .. "_low_prio"] tbl[#tbl + 1] = mountID
-               else
-                  local tbl = available[prefix] tbl[#tbl + 1] = mountID
-               end
-            end
-
-            if mount_type == 269 then
-               local tbl = available.watergliding tbl[#tbl + 1] = mountID
-            end
-
-            if spellID == 61425 or spellID == 61447 then
-               local tbl = available.shop tbl[#tbl + 1] = mountID
-            end
-
-            if spellID == 75207 then
-               local tbl = available.vashjir tbl[#tbl + 1] = mountID
-            end
-
-            if spellID == 134359 then
-               local tbl = available.herbalism tbl[#tbl + 1] = mountID
-            end
-
-            if spellID == 87090 or spellID == 87091 then
-               local tbl = available.pvp tbl[#tbl + 1] = mountID
-            end
-
-            if spellID == 344578 then
-               local tbl = available.shadowlands_the_maw tbl[#tbl + 1] = mountID
-            end
-
-         until true
-      end
+      ScanMounts()
 
       if (herbalism_local_name == nil or herbalism_local_name == '') then
          local herbalism_skill_line_id = C_TradeSkillUI.GetProfessionSkillLineID(Enum.Profession.Herbalism)
