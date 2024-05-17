@@ -196,6 +196,26 @@ local function ScanMounts()
    end
 end
 
+local function PlayerHasHerbalism()
+   if (herbalism_local_name == nil or herbalism_local_name == '') then
+      local herbalism_skill_line_id = C_TradeSkillUI.GetProfessionSkillLineID(Enum.Profession.Herbalism)
+      if herbalism_skill_line_id then herbalism_local_name = C_TradeSkillUI.GetTradeSkillDisplayName(herbalism_skill_line_id) end
+      if herbalism_local_name == '' then herbalism_local_name = nil end
+   end
+
+   local prof1, prof2 = GetProfessions()
+   if prof1 then
+      local name, icon = GetProfessionInfo(prof1)
+      if icon == 4620675 then return true end
+      if name and herbalism_local_name and name == herbalism_local_name then return true end
+   end
+   if not has_herbalism and prof2 then
+      local name, icon = GetProfessionInfo(prof2)
+      if icon == 4620675 then return true end
+      if name and herbalism_local_name and name == herbalism_local_name then return true end
+   end
+end
+
 local function Mount(args)
    local alt_mode
    local is_alt_mode_on = args.is_alt_mode_on
@@ -206,23 +226,7 @@ local function Mount(args)
 
       ScanMounts()
 
-      if (herbalism_local_name == nil or herbalism_local_name == '') then
-         local herbalism_skill_line_id = C_TradeSkillUI.GetProfessionSkillLineID(Enum.Profession.Herbalism)
-         if herbalism_skill_line_id then herbalism_local_name = C_TradeSkillUI.GetTradeSkillDisplayName(herbalism_skill_line_id) end
-         if herbalism_local_name == '' then herbalism_local_name = nil end
-      end
-      local have_herbalism
-      local prof1, prof2 = GetProfessions()
-      if prof1 then
-         local name, icon = GetProfessionInfo(prof1)
-         if icon == 4620675 then have_herbalism = true end
-         if name and herbalism_local_name and name == herbalism_local_name then have_herbalism = true end
-      end
-      if not have_herbalism and prof2 then
-         local name, icon = GetProfessionInfo(prof2)
-         if icon == 4620675 then have_herbalism = true end
-         if name and herbalism_local_name and name == herbalism_local_name then have_herbalism = true end
-      end
+      local has_herbalism = (#available.herbalism > 0) and PlayerHasHerbalism()
 
       local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
 
@@ -276,7 +280,7 @@ local function Mount(args)
          prio[#prio + 1] = "shop"
       end
 
-      if have_herbalism then
+      if has_herbalism then
          prio[#prio + 1] = "herbalism"
       end
 
