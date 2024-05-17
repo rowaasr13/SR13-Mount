@@ -83,7 +83,7 @@ end
 
 local shadowlands_flying_uimapid = { [1525] --[[Revendreth]] = true, [1533] --[[Bastion]] = true, [1536] --[[Maldraxxus]] = true, [1565] --[[Ardenwald]] = true }
 
-local function ClassicFlyingEnabled(instanceType, instanceMapID)
+local function IsClassicFlyingEnabled(instanceType, instanceMapID)
    if instanceType == 'pvp' then return end
    if instanceMapID ==  974 then return end -- Darkmoon Faire
    if instanceMapID == 1064 then return end -- Isle of Thunder
@@ -103,6 +103,12 @@ local function ClassicFlyingEnabled(instanceType, instanceMapID)
       local _, _, _, completed = GetAchievementInfo(19307) -- Dragon Isles Pathfinder
       return completed
    end
+
+   return true
+end
+
+local function IsAdvancedFlyingEnabled()
+   if not IsAdvancedFlyableArea() then return false end
 
    return true
 end
@@ -244,7 +250,8 @@ local function Mount(args)
          )
       end
 
-      local classic_flying_enabled = ClassicFlyingEnabled(instanceType, instanceMapID)
+      local is_classic_flying_enabled = IsClassicFlyingEnabled(instanceType, instanceMapID)
+      local is_advanced_flying_enabled = IsAdvancedFlyingEnabled(instanceType, instanceMapID)
 
       local is_submerged = IsSubmerged()
 
@@ -262,7 +269,7 @@ local function Mount(args)
          end
       end
 
-      if IsAdvancedFlyableArea() and not alt_mode then
+      if is_advanced_flying_enabled and not alt_mode then
          prio[#prio + 1] = "dragonriding"
       end
 
@@ -284,12 +291,12 @@ local function Mount(args)
          prio[#prio + 1] = "herbalism"
       end
 
-      if classic_flying_enabled then
+      if is_classic_flying_enabled then
          prio[#prio + 1] = "flying"
          prio[#prio + 1] = "flying_low_prio"
       end
 
-      if IsAdvancedFlyableArea() and alt_mode then
+      if is_advanced_flying_enabled and alt_mode then
          prio[#prio + 1] = "dragonriding"
       end
 
