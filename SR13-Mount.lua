@@ -21,6 +21,9 @@ local type = type
 local wipe = wipe
 -- [AUTOLOCAL END]
 
+local player_cache = _G['SR13-Lib'] and _G['SR13-Lib'].player_cache
+player_cache = player_cache or {}
+
 local low_prio_mount = {
    [ 32243] = 1, -- Tawny Wind Rider
    [ 32244] = 1, -- Blue Wind Rider
@@ -232,7 +235,7 @@ local function Mount(args)
 
       ScanMounts()
 
-      local has_herbalism = (#available.herbalism > 0) and PlayerHasHerbalism()
+      local has_herbalism = (not player_cache.is_in_wow_remix_mop) and (#available.herbalism > 0) and (PlayerHasHerbalism())
 
       local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
 
@@ -283,7 +286,7 @@ local function Mount(args)
          prio[#prio + 1] = "flying_low_prio"
       end
 
-      if not alt_mode and IsInInstance() then
+      if (not alt_mode) and (IsInInstance()) and (not player_cache.is_in_wow_remix_mop) then
          prio[#prio + 1] = "shop"
       end
 
@@ -291,7 +294,7 @@ local function Mount(args)
          prio[#prio + 1] = "herbalism"
       end
 
-      if is_classic_flying_enabled then
+      if (is_classic_flying_enabled) and (not (player_cache.is_in_wow_remix_mop and IsInInstance())) then
          prio[#prio + 1] = "flying"
          prio[#prio + 1] = "flying_low_prio"
       end

@@ -2,5 +2,5 @@
 ## Title: SR13-Mount
 ## Author: Author: Oleg "Rowaa[SR13]" Volkov
 ## Version: v1
-## OptionalDeps:
+## OptionalDeps: SR13-Lib
 SR13-Mount.lua
