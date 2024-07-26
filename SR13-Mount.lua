@@ -62,8 +62,8 @@ local available = {
 
 local prio = {}
 
-local name = {}
-local spellIDs = {}
+local mount_name = {}
+local mount_spellid = {}
 local mount_types = {}
 local player_can_fly
 local player_true_maw_walker
@@ -86,10 +86,8 @@ end
 
 local shadowlands_flying_uimapid = { [1525] --[[Revendreth]] = true, [1533] --[[Bastion]] = true, [1536] --[[Maldraxxus]] = true, [1565] --[[Ardenwald]] = true }
 
-local function IsClassicFlyingEnabled(instanceType, instanceMapID)
+local function IsFlyingEnabled(instanceType, instanceMapID)
    if instanceType == 'pvp' then return end
-   if instanceMapID ==  974 then return end -- Darkmoon Faire
-   if instanceMapID == 1064 then return end -- Isle of Thunder
 
    if not player_can_fly then
       -- Master/Expert/Artisan Riding, allows flying mounts to actually fly
@@ -102,18 +100,29 @@ local function IsClassicFlyingEnabled(instanceType, instanceMapID)
       return shadowlands_flying_uimapid[C_Map_GetBestMapForUnit("player")]
    end
 
-   if instanceMapID == 2444 or instanceMapID == 2454 then -- Dragon Isles + Zaralek Cavern
-      local _, _, _, completed = GetAchievementInfo(19307) -- Dragon Isles Pathfinder
-      return completed
-   end
-
    return true
 end
 
-local function IsAdvancedFlyingEnabled()
-   if not IsAdvancedFlyableArea() then return false end
+-- WoW errornously reports some zones/places/situations as flyable when they are not. Do NOT check any kind of flying classic/advanced here.
+local never_flying_instances = {
+   [ 974] = true, -- Darkmoon Faire
+   [1126] = true, -- Isle of Thunder's solo scenarios
+   [1064] = true, -- Isle of Thunder
+   [ 870] = { -- Pandaria
+      [ 554] = true, -- Timeless Isle
+   },
+   [2222] = { -- The Shadowlands
+      [1670] = true, -- Oribos (lower level)
+      [1671] = true, -- Oribos (upper level)
+   },
+}
+local function IsZoneInTable(zone_table, instanceType, instanceMapID, uiMapID)
+   local instance_data = zone_table[instanceMapID]
+   if instance_data == true then return true end
+   if instance_data == nil then return end
 
-   return true
+   if not uiMapID then uiMapID = C_Map_GetBestMapForUnit("player") end
+   if instance_data[uiMapID] == true then return true end
 end
 
 local function ScanMounts()
@@ -125,19 +134,18 @@ local function ScanMounts()
    for idx = 1, #mount_ids do
       repeat
          local mountID = mount_ids[idx]
-         local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, isFactionSpecific, faction, isFiltered, isCollected, mountID, isForDragonriding = GetMountInfoByID(mountID)
+         local name, spellID, icon, isActive, isUsable, sourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected, mountID, isSteadyFlight = GetMountInfoByID(mountID)
 
          if not isUsable then break end
 
-         name[mountID] = creatureName
-         spellIDs[mountID] = spellID
+         mount_name[mountID] = name
+         mount_spellid[mountID] = spellID
 
          -- no need to retrieve mount type more than once
          local mount_type = mount_types[spellID]
          if not mount_type then
-            local creatureDisplayID, descriptionText, sourceText, isSelfMount, mountType = GetMountInfoExtraByID(mountID)
-
-            mount_type = mountType
+            local creatureDisplayInfoID, description, source, isSelfMount, mountTypeID = GetMountInfoExtraByID(mountID)
+            mount_type = mountTypeID
             mount_types[spellID] = mount_type
          end
 
@@ -155,10 +163,9 @@ local function ScanMounts()
 
          if spellID == 367826 then break end -- Siege Turtle, only increases swim speed
 
-         if isForDragonriding then
+         if (mount_type == 402) or (mount_type == 424) and (not isSteadyFlight) then
             local prefix = "dragonriding"
             local tbl = available[prefix] tbl[#tbl + 1] = mountID
-            break
          end
 
          local prefix = "ground"
@@ -168,7 +175,8 @@ local function ScanMounts()
             local tbl = available[prefix] tbl[#tbl + 1] = mountID
          end
 
-         if mount_type == 248 then
+         -- Since TWW every dragonriding mount is also flying
+         if (mount_type == 248) or (mount_type == 402) or (mount_type == 424) then
             local prefix = "flying"
             if low_prio_mount[spellID] then
                local tbl = available[prefix .. "_low_prio"] tbl[#tbl + 1] = mountID
@@ -225,130 +233,143 @@ local function PlayerHasHerbalism()
    end
 end
 
-local function Mount(args)
+-- /dump C_Spell.GetSpellTexture(C_MountJournal.GetDynamicFlightModeSpellID())
+
+local function BuildPriority(args)
+   wipe(prio)
+
    local alt_mode
    local is_alt_mode_on = args.is_alt_mode_on
    if is_alt_mode_on then alt_mode = is_alt_mode_on() end
 
-   if not IsMounted() then
-      wipe(prio)
+   local has_herbalism = (not player_cache.is_in_wow_remix_mop) and (#available.herbalism > 0) and (PlayerHasHerbalism())
+   local uiMapID
 
-      ScanMounts()
+   local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
 
-      local has_herbalism = (not player_cache.is_in_wow_remix_mop) and (#available.herbalism > 0) and (PlayerHasHerbalism())
+   if args.print then
+      if not uiMapID then uiMapID = C_Map_GetBestMapForUnit("player") end
+      args.print(
+         "mounts available " ..
+         " G:" .. #available.ground ..
+         " F:" .. #available.flying ..
+         " S:" .. #available.shop ..
+         " W:" .. #available.watergliding ..
+         " H:" .. #available.herbalism ..
+         " D:" .. #available.dragonriding ..
+         " instance (" .. instanceMapID .. ">" .. (uiMapID or "nil") .. ") " .. instanceName
+      )
+   end
 
-      local instanceName, instanceType, difficultyIndex, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID = GetInstanceInfo()
+   local never_flying_zone = IsZoneInTable(never_flying_instances, instanceType, instanceMapID, uiMapID)
+   local always_flying_zone = false
+   local player_can_fly
+   if always_flying_zone then
+      player_can_fly = true
+   elseif never_flying_zone then
+      player_can_fly = false
+   else
+      player_can_fly = IsFlyingEnabled()
+   end
 
-      if args.print then
+   local is_submerged = IsSubmerged()
+
+   if is_submerged then
+      if instanceMapID == 0 then
          local uiMapID = C_Map_GetBestMapForUnit("player")
-         args.print(
-            "mounts available " ..
-            " G:" .. #available.ground ..
-            " F:" .. #available.flying ..
-            " S:" .. #available.shop ..
-            " W:" .. #available.watergliding ..
-            " H:" .. #available.herbalism ..
-            " D:" .. #available.dragonriding ..
-            " instance (" .. instanceMapID .. ">" .. (uiMapID or "nil") .. ") " .. instanceName
-         )
-      end
-
-      local is_classic_flying_enabled = IsClassicFlyingEnabled(instanceType, instanceMapID)
-      local is_advanced_flying_enabled = IsAdvancedFlyingEnabled(instanceType, instanceMapID)
-
-      local is_submerged = IsSubmerged()
-
-      if is_submerged then
-         if instanceMapID == 0 then
-            local uiMapID = C_Map_GetBestMapForUnit("player")
-            local is_vashjir = uiMapID >= 201 and uiMapID <= 205 and uiMapID ~= 202 -- 202 is Gilneas
-            if is_vashjir then
-               prio[#prio + 1] = "vashjir"
-               prio[#prio + 1] = "underwater"
-            end
-         end
-         if alt_mode then
+         local is_vashjir = uiMapID >= 201 and uiMapID <= 205 and uiMapID ~= 202 -- 202 is Gilneas
+         if is_vashjir then
+            prio[#prio + 1] = "vashjir"
             prio[#prio + 1] = "underwater"
          end
       end
-
-      if is_advanced_flying_enabled and not alt_mode then
-         prio[#prio + 1] = "dragonriding"
+      if alt_mode then
+         prio[#prio + 1] = "underwater"
       end
+   end
 
-      if instanceType == "pvp" then
-         prio[#prio + 1] = "pvp"
-         prio[#prio + 1] = "ground"
-      end
+   if instanceMapID == 1756 then -- The Deaths of Chromie -- Dragonriding works here in TWW?
+      prio[#prio + 1] = "flying"
+      prio[#prio + 1] = "flying_low_prio"
+   end
 
-      if instanceMapID == 1756 then -- The Deaths of Chromie
+   if player_can_fly then
+      if alt_mode then
          prio[#prio + 1] = "flying"
          prio[#prio + 1] = "flying_low_prio"
-      end
-
-      if (not alt_mode) and (IsInInstance()) and (not player_cache.is_in_wow_remix_mop) then
-         prio[#prio + 1] = "shop"
-      end
-
-      if has_herbalism then
-         prio[#prio + 1] = "herbalism"
-      end
-
-      if (is_classic_flying_enabled) and (not (player_cache.is_in_wow_remix_mop and IsInInstance())) then
-         prio[#prio + 1] = "flying"
-         prio[#prio + 1] = "flying_low_prio"
-      end
-
-      if is_advanced_flying_enabled and alt_mode then
+      else
          prio[#prio + 1] = "dragonriding"
       end
+   end
 
-      if is_swimming then
-         prio[#prio + 1] = "watergliding"
-      end
-
+   if instanceType == "pvp" then
+      prio[#prio + 1] = "pvp"
       prio[#prio + 1] = "ground"
-      prio[#prio + 1] = "ground_low_prio"
-      prio[#prio + 1] = "slow"
+   end
 
-      if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
+   if (not alt_mode) and (IsInInstance()) and (not player_cache.is_in_wow_remix_mop) then
+      prio[#prio + 1] = "shop"
+   end
+
+   if has_herbalism then
+      prio[#prio + 1] = "herbalism"
+   end
+
+   if is_swimming then
+      prio[#prio + 1] = "watergliding"
+   end
+
+   prio[#prio + 1] = "ground"
+   prio[#prio + 1] = "ground_low_prio"
+   prio[#prio + 1] = "slow"
+
+   if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
+      if not IsPlayerTrueMawWalker() then
+         wipe(prio)
+         prio[1] = "shadowlands_the_maw"
+      end
+   end
+
+   if instanceMapID == 2222 then
+      local uiMapID = C_Map_GetBestMapForUnit("player")
+      if
+         uiMapID == 1543 -- The Shadowlands > The Maw
+         or uiMapID == 1961 -- The Shadowlands > Korthia
+      then
          if not IsPlayerTrueMawWalker() then
             wipe(prio)
             prio[1] = "shadowlands_the_maw"
          end
       end
+   end
+end
 
-      if instanceMapID == 2222 then
-         local uiMapID = C_Map_GetBestMapForUnit("player")
-         if
-            uiMapID == 1543 -- The Shadowlands > The Maw
-            or uiMapID == 1961 -- The Shadowlands > Korthia
-         then
-            if not IsPlayerTrueMawWalker() then
-               wipe(prio)
-               prio[1] = "shadowlands_the_maw"
-            end
-         end
-      end
-
-      local mount_category, mount_count, pick_idx, mountID
-      for idx = 1, #prio do
-         mount_category = prio[idx]
-         local mount_list = available[mount_category]
-         mount_count = #mount_list
-         if mount_count > 0 then
-            pick_idx = random(mount_count)
-            mountID = mount_list[pick_idx]
-            break
-         end
-      end
-
-      if mountID then
-         if args.print then args.print(format("mount: %s %s %d/%d %s(%d)", (alt_mode and "alt " or ""), mount_category, pick_idx, mount_count, name[mountID], spellIDs[mountID])) end
-         C_MountJournal.SummonByID(mountID)
-         return true
+local function SelectMount(args)
+   local mount_category, mount_count, pick_idx, mountID
+   for idx = 1, #prio do
+      mount_category = prio[idx]
+      local mount_list = available[mount_category]
+      mount_count = #mount_list
+      if mount_count > 0 then
+         pick_idx = random(mount_count)
+         mountID = mount_list[pick_idx]
+         break
       end
    end
+
+   if mountID then
+      if args.print then args.print(format("mount: %s %s %d/%d %s(%d)", (alt_mode and "alt " or ""), mount_category, pick_idx, mount_count, mount_name[mountID], mount_spellid[mountID])) end
+      C_MountJournal.SummonByID(mountID)
+      return true
+   end
+end
+
+local function Mount(args)
+   if IsMounted() then return end
+
+   ScanMounts()
+   BuildPriority(args)
+   SelectMount(args)
 end
 
 local a_export = {
