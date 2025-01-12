@@ -116,8 +116,20 @@ local never_flying_instances = {
       [1671] = true, -- Oribos (upper level)
    },
 }
-local function IsZoneInTable(zone_table, instanceType, instanceMapID, uiMapID)
-   local instance_data = zone_table[instanceMapID]
+
+-- Instances that explicitly use flying mechanic
+local always_flying_instances = {
+   [2516] = {
+      [2093] = true, -- Nokhud Offensive
+   },
+   [2776] = true, -- Codex of Chromie
+}
+
+local function IsInstanceInTable(zone_table, instanceType, instanceMapID, uiMapID)
+   local instance_data = zone_table[instanceType]
+   if instance_data then return true end
+
+   instance_data = zone_table[instanceMapID]
    if instance_data == true then return true end
    if instance_data == nil then return end
 
@@ -233,9 +245,13 @@ local function PlayerHasHerbalism()
    end
 end
 
--- /dump C_Spell.GetSpellTexture(C_MountJournal.GetDynamicFlightModeSpellID())
-
 local function BuildPriority(args)
+   if player_cache.is_in_wow_remix_mop then
+      never_flying_instances.raid = true
+      never_flying_instances.party = true
+      never_flying_instances.scenario = true
+   end
+
    wipe(prio)
 
    local alt_mode
@@ -261,18 +277,27 @@ local function BuildPriority(args)
       )
    end
 
-   local never_flying_zone = IsZoneInTable(never_flying_instances, instanceType, instanceMapID, uiMapID)
-   local always_flying_zone = false
+   local never_flying_instance = IsInstanceInTable(never_flying_instances, instanceType, instanceMapID, uiMapID)
+   local always_flying_instance = IsInstanceInTable(always_flying_instances, instanceType, instanceMapID, uiMapID)
    local player_can_fly
-   if always_flying_zone then
+   if always_flying_instance then
       player_can_fly = true
-   elseif never_flying_zone then
+   elseif never_flying_instance then
       player_can_fly = false
    else
       player_can_fly = IsFlyingEnabled()
    end
 
    local is_submerged = IsSubmerged()
+
+   if always_flying_instance then
+      if alt_mode then
+         prio[#prio + 1] = "flying"
+         prio[#prio + 1] = "flying_low_prio"
+      else
+         prio[#prio + 1] = "dragonriding"
+      end
+   end
 
    if is_submerged then
       if instanceMapID == 0 then
