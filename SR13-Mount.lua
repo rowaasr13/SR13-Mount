@@ -50,6 +50,8 @@ local available = {
    pvp             = {},
    shop            = {},
    herbalism       = {},
+   herbalism_flying       = {},
+   herbalism_dragonriding = {},
    flying          = {},
    flying_low_prio = {},
    watergliding    = {},
@@ -210,7 +212,9 @@ local function ScanMounts()
          end
 
          if spellID == 134359 then
-            local tbl = available.herbalism tbl[#tbl + 1] = mountID
+            local tbl = available.herbalism              tbl[#tbl + 1] = mountID
+            local tbl = available.herbalism_flying       tbl[#tbl + 1] = mountID
+            local tbl = available.herbalism_dragonriding tbl[#tbl + 1] = mountID
          end
 
          if spellID == 87090 or spellID == 87091 then
@@ -318,14 +322,6 @@ local function BuildPriority(args)
       prio[#prio + 1] = "flying_low_prio"
    end
 
-   if player_can_fly then
-      if alt_mode then
-         prio[#prio + 1] = "flying"
-         prio[#prio + 1] = "flying_low_prio"
-      else
-         prio[#prio + 1] = "dragonriding"
-      end
-   end
 
    if instanceType == "pvp" then
       prio[#prio + 1] = "pvp"
@@ -334,6 +330,22 @@ local function BuildPriority(args)
 
    if (not alt_mode) and (IsInInstance()) and (not player_cache.is_in_wow_remix_mop) then
       prio[#prio + 1] = "shop"
+   end
+
+   if player_can_fly then
+      if alt_mode then
+         if has_herbalism then prio[#prio + 1] = "herbalism_flying" end
+         prio[#prio + 1] = "flying"
+         prio[#prio + 1] = "flying_low_prio"
+      else
+         if has_herbalism then prio[#prio + 1] = "herbalism_dragonriding" end
+         prio[#prio + 1] = "dragonriding"
+      end
+   end
+
+   if C_MountJournal.IsDragonridingUnlocked() then
+      if has_herbalism then prio[#prio + 1] = "herbalism_dragonriding" end
+      prio[#prio + 1] = "dragonriding"
    end
 
    if has_herbalism then
@@ -369,7 +381,45 @@ local function BuildPriority(args)
    end
 end
 
-local function SelectMount(args)
+local mount_category_to_flying_type = {
+   herbalism_flying       = "flying",
+   flying                 = "flying",
+   flying_low_prio        = "flying",
+   herbalism_dragonriding = "dragonriding",
+   dragonriding           = "dragonriding",
+}
+local category_to_icon_id = {
+   dragonriding    = { [5145511] = true, [5142725] = true },
+   flying          = 5142726,
+}
+local switch_mode_spell_id
+local function IsSwitchingFlyingModeRequired(args, mount_category, mountID)
+   if not C_MountJournal.IsDragonridingUnlocked() then return end
+   local flying_type = mount_category_to_flying_type[mount_category]
+   local should_have_icon = category_to_icon_id[flying_type]
+   if not should_have_icon then return end
+
+   -- /dump C_Spell.GetSpellTexture(C_MountJournal.GetDynamicFlightModeSpellID())
+   if not switch_mode_spell_id then switch_mode_spell_id = C_MountJournal.GetDynamicFlightModeSpellID() end
+   if not switch_mode_spell_id then return end
+
+   local current_icon = C_Spell.GetSpellTexture(switch_mode_spell_id)
+   if current_icon == should_have_icon then return false end
+   if type(should_have_icon) == "table" and should_have_icon[current_icon] then return false end
+
+   if args.print then
+      local found
+      for category, icon in pairs(category_to_icon_id) do
+         if current_icon == icon then found = true break end
+         if type(icon) == "table" and icon[current_icon] then found = true end
+      end
+      if not found then args.print("FIXME: unknown flying icon", current_icon) return end
+   end
+
+   return true
+end
+
+local function SelectFirstAvailableCategoryAndMount(args)
    local mount_category, mount_count, pick_idx, mountID
    for idx = 1, #prio do
       mount_category = prio[idx]
@@ -394,11 +444,21 @@ local function Mount(args)
 
    ScanMounts()
    BuildPriority(args)
-   SelectMount(args)
+   return SummonMount(args)
+end
+
+local function IsSwitchingFlyingModeRequiredScan(args)
+   if IsMounted() then return end
+
+   ScanMounts()
+   BuildPriority(args)
+   local mount_category, mountID = SelectFirstAvailableCategoryAndMount(args)
+   return IsSwitchingFlyingModeRequired(args, mount_category, mountID)
 end
 
 local a_export = {
-   Summon = Mount
+   Summon = Mount,
+   IsSwitchingFlyingModeRequiredScan = IsSwitchingFlyingModeRequiredScan,
 }
 
 _G[a_name] = a_export
