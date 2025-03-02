@@ -110,12 +110,17 @@ local never_flying_instances = {
    [ 974] = true, -- Darkmoon Faire
    [1126] = true, -- Isle of Thunder's solo scenarios
    [1064] = true, -- Isle of Thunder
+   [1265] = {
+      [ 577] = true, -- Tanaan Jungle Intro / WoD intro mission
+   },
    [ 870] = { -- Pandaria
       [ 554] = true, -- Timeless Isle
    },
    [2222] = { -- The Shadowlands
+      [1543] = true, -- The Maw
       [1670] = true, -- Oribos (lower level)
       [1671] = true, -- Oribos (upper level)
+      [1961] = true, -- Korthia
    },
 }
 
@@ -343,7 +348,7 @@ local function BuildPriority(args)
       end
    end
 
-   if C_MountJournal.IsDragonridingUnlocked() then
+   if (not never_flying_instance) and C_MountJournal.IsDragonridingUnlocked() then
       if has_herbalism then prio[#prio + 1] = "herbalism_dragonriding" end
       prio[#prio + 1] = "dragonriding"
    end
