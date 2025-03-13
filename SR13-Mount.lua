@@ -437,6 +437,12 @@ local function SelectFirstAvailableCategoryAndMount(args)
       end
    end
 
+   return mount_category, mount_count, pick_idx, mountID
+end
+
+local function SummonMount(args)
+   local mount_category, mount_count, pick_idx, mountID = SelectFirstAvailableCategoryAndMount(args)
+
    if mountID then
       if args.print then args.print(format("mount: %s %s %d/%d %s(%d)", (alt_mode and "alt " or ""), mount_category, pick_idx, mount_count, mount_name[mountID], mount_spellid[mountID])) end
       C_MountJournal.SummonByID(mountID)
@@ -457,7 +463,7 @@ local function IsSwitchingFlyingModeRequiredScan(args)
 
    ScanMounts()
    BuildPriority(args)
-   local mount_category, mountID = SelectFirstAvailableCategoryAndMount(args)
+   local mount_category, mount_count, pick_idx, mountID = SelectFirstAvailableCategoryAndMount(args)
    return IsSwitchingFlyingModeRequired(args, mount_category, mountID)
 end
 
