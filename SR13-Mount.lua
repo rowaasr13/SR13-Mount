@@ -117,11 +117,13 @@ local never_flying_instances = {
       [ 554] = true, -- Timeless Isle
    },
    [2222] = { -- The Shadowlands
-      [1543] = true, -- The Maw
+      [1543] = "shadowlands_the_maw", -- The Maw
       [1670] = true, -- Oribos (lower level)
       [1671] = true, -- Oribos (upper level)
-      [1961] = true, -- Korthia
+      [1961] = "shadowlands_the_maw", -- Korthia
    },
+   [2364] = "shadowlands_the_maw", -- The Shadowlands > The Maw (intro scenario)
+   [2456] = { [1960] = "shadowlands_the_maw" } -- The Shadowlands > The Maw (Maldraxxus campaign)
 }
 
 -- Instances that explicitly use flying mechanic
@@ -137,11 +139,11 @@ local function IsInstanceInTable(zone_table, instanceType, instanceMapID, uiMapI
    if instance_data then return true end
 
    instance_data = zone_table[instanceMapID]
-   if instance_data == true then return true end
-   if instance_data == nil then return end
+   if (instance_data == true) or (instance_data == "shadowlands_the_maw") then return instance_data end
+   if not instance_data then return end
 
    if not uiMapID then uiMapID = C_Map_GetBestMapForUnit("player") end
-   if instance_data[uiMapID] == true then return true end
+   return instance_data[uiMapID]
 end
 
 local function ScanMounts()
@@ -287,7 +289,14 @@ local function BuildPriority(args)
    end
 
    local never_flying_instance = IsInstanceInTable(never_flying_instances, instanceType, instanceMapID, uiMapID)
+
+   if (never_flying_instance == "shadowlands_the_maw") and (not IsPlayerTrueMawWalker()) then
+      prio[1] = "shadowlands_the_maw"
+      return
+   end
+
    local always_flying_instance = IsInstanceInTable(always_flying_instances, instanceType, instanceMapID, uiMapID)
+
    local player_can_fly
    if always_flying_instance then
       player_can_fly = true
@@ -364,26 +373,6 @@ local function BuildPriority(args)
    prio[#prio + 1] = "ground"
    prio[#prio + 1] = "ground_low_prio"
    prio[#prio + 1] = "slow"
-
-   if instanceMapID == 2364 then -- The Shadowlands > The Maw (intro scenario)
-      if not IsPlayerTrueMawWalker() then
-         wipe(prio)
-         prio[1] = "shadowlands_the_maw"
-      end
-   end
-
-   if instanceMapID == 2222 then
-      local uiMapID = C_Map_GetBestMapForUnit("player")
-      if
-         uiMapID == 1543 -- The Shadowlands > The Maw
-         or uiMapID == 1961 -- The Shadowlands > Korthia
-      then
-         if not IsPlayerTrueMawWalker() then
-            wipe(prio)
-            prio[1] = "shadowlands_the_maw"
-         end
-      end
-   end
 end
 
 local mount_category_to_flying_type = {
